@@ -1,0 +1,34 @@
+flowchart TB
+    subgraph Producers["Sorgenti — 4 nodi sensore"]
+        direction LR
+        P1["producer nodo_1<br/>(macchina 1)"]
+        P2["producer nodo_2<br/>(macchina 2)"]
+        P3["producer nodo_3<br/>(macchina 3)"]
+        P4["producer nodo_4<br/>(macchina 4)"]
+    end
+
+    subgraph Kafka["Kafka cluster"]
+        K["topic iot.sensor.data<br/>3 broker · 4 partizioni · repl-factor 3"]
+    end
+
+    subgraph Spark["Spark Standalone"]
+        S["Structured Streaming + Batch<br/>1 master + 3 worker"]
+    end
+
+    subgraph Storage["Persistenza poliglotta"]
+        direction LR
+        M[("MongoDB<br/>raw · processed · stats<br/>fire · batch")]
+        E[("Elasticsearch<br/>time-series · stato live<br/>finestre · baseline")]
+    end
+
+    G["Grafana<br/>(dashboard live + storiche)"]
+
+    P1 --> K
+    P2 --> K
+    P3 --> K
+    P4 --> K
+    K --> S
+    S --> M
+    S --> E
+    M --> G
+    E --> G

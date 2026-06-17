@@ -1,0 +1,6 @@
+elasticsearch==7.17.9
+pymongo==4.6.3
+requests==2.31.0
+# numpy: richiesto da pyspark.ml.stat.Correlation (batch_analytics.py) per
+# accedere alla DenseMatrix di correlazione. MLlib lo importa lato driver.
+numpy==1.26.4

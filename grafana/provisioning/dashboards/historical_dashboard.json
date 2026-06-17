@@ -1,0 +1,517 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "datasource",
+      "id": "elasticsearch",
+      "name": "Elasticsearch",
+      "version": "1.0.0"
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.4.2"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "description": "Batch Layer storico (Lambda) — percentili, baseline e copertura per nodo da node_baseline_index. Snapshot rigenerato dal job batch on-demand (make batch-now).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Home IoT",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/iot-sensor-main/iot-sensor-dashboard"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Percentili e Baseline storici (per nodo)",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Baseline sensori per nodo (p50 / p95 / p99 / media)",
+      "type": "table",
+      "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+      "description": "Una riga per nodo. Mediana (p50), p95, p99 e media storica calcolati sull'intera raw_readings dal job batch.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "displayMode": "auto", "align": "auto" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "/_temp$/" },
+            "properties": [ { "id": "unit", "value": "celsius" } ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "node_id" },
+            "properties": [ { "id": "custom.width", "value": 110 } ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [ { "displayName": "node_id", "desc": false } ]
+      },
+      "gridPos": { "x": 0, "y": 1, "w": 24, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+          "query": "*",
+          "metrics": [
+            { "id": "1", "type": "raw_data", "settings": { "size": "10" } }
+          ],
+          "bucketAggs": [],
+          "timeField": "report_generated_at"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "highlight": true,
+              "sort": true,
+              "trend_hourly": true,
+              "distinct_reading_index": true,
+              "first_ingest_ts": true,
+              "last_ingest_ts": true,
+              "total_readings": true,
+              "report_generated_at": true
+            },
+            "indexByName": {
+              "node_id": 0,
+              "p50_temp": 1,
+              "p95_temp": 2,
+              "p99_temp": 3,
+              "avg_temp": 4,
+              "p50_co": 5,
+              "p95_co": 6,
+              "p99_co": 7,
+              "avg_co": 8,
+              "p50_smoke": 9,
+              "p95_smoke": 10,
+              "p99_smoke": 11,
+              "avg_smoke": 12,
+              "p50_gas": 13,
+              "p95_gas": 14,
+              "p99_gas": 15,
+              "avg_gas": 16
+            },
+            "renameByName": {
+              "node_id": "Nodo",
+              "p50_temp": "Temp p50", "p95_temp": "Temp p95", "p99_temp": "Temp p99", "avg_temp": "Temp media",
+              "p50_co": "CO p50", "p95_co": "CO p95", "p99_co": "CO p99", "avg_co": "CO media",
+              "p50_smoke": "Smoke p50", "p95_smoke": "Smoke p95", "p99_smoke": "Smoke p99", "avg_smoke": "Smoke media",
+              "p50_gas": "Gas p50", "p95_gas": "Gas p95", "p99_gas": "Gas p99", "avg_gas": "Gas media"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Copertura dati e ultimo aggiornamento batch",
+      "gridPos": { "x": 0, "y": 10, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "title": "Copertura per nodo (conteggi e finestra temporale)",
+      "type": "table",
+      "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+      "description": "total_readings, reading_index distinti, primo/ultimo ingest e timestamp di generazione del report batch.",
+      "fieldConfig": {
+        "defaults": { "custom": { "displayMode": "auto", "align": "auto" } },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [ { "displayName": "node_id", "desc": false } ]
+      },
+      "gridPos": { "x": 0, "y": 11, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+          "query": "*",
+          "metrics": [
+            { "id": "1", "type": "raw_data", "settings": { "size": "10" } }
+          ],
+          "bucketAggs": [],
+          "timeField": "report_generated_at"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "highlight": true,
+              "sort": true,
+              "trend_hourly": true,
+              "p50_temp": true, "p95_temp": true, "p99_temp": true, "avg_temp": true,
+              "min_temp": true, "max_temp": true,
+              "p50_co": true, "p95_co": true, "p99_co": true, "avg_co": true,
+              "min_co": true, "max_co": true,
+              "p50_smoke": true, "p95_smoke": true, "p99_smoke": true, "avg_smoke": true,
+              "min_smoke": true, "max_smoke": true,
+              "p50_gas": true, "p95_gas": true, "p99_gas": true, "avg_gas": true,
+              "min_gas": true, "max_gas": true
+            },
+            "indexByName": {
+              "node_id": 0,
+              "total_readings": 1,
+              "distinct_reading_index": 2,
+              "first_ingest_ts": 3,
+              "last_ingest_ts": 4,
+              "report_generated_at": 5
+            },
+            "renameByName": {
+              "node_id": "Nodo",
+              "total_readings": "Letture totali",
+              "distinct_reading_index": "reading_index distinti",
+              "first_ingest_ts": "Primo ingest",
+              "last_ingest_ts": "Ultimo ingest",
+              "report_generated_at": "Report generato"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Letture totali per nodo",
+      "type": "bargauge",
+      "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+      "description": "total_readings per nodo dall'ultimo snapshot batch.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "continuous-GrYlRd" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [ { "color": "blue", "value": null } ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "/^Sum$/",
+          "values": true
+        },
+        "showUnfilled": true
+      },
+      "gridPos": { "x": 0, "y": 19, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+          "query": "*",
+          "metrics": [
+            { "id": "1", "type": "sum", "field": "total_readings" }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "node_id",
+              "settings": { "size": "10", "order": "asc", "orderBy": "_term" }
+            }
+          ],
+          "timeField": "report_generated_at"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Temperatura p99 per nodo",
+      "type": "bargauge",
+      "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+      "description": "99° percentile storico della temperatura per nodo — la coda alta delle letture.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "orange", "value": 30 },
+              { "color": "red", "value": 40 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "/^Max$/",
+          "values": true
+        },
+        "showUnfilled": true
+      },
+      "gridPos": { "x": 12, "y": 19, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+          "query": "*",
+          "metrics": [
+            { "id": "1", "type": "max", "field": "p99_temp" }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "node_id",
+              "settings": { "size": "10", "order": "asc", "orderBy": "_term" }
+            }
+          ],
+          "timeField": "report_generated_at"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Validazione detection vs ground-truth Fire",
+      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "title": "Metriche di detection per nodo (precision / recall / F1)",
+      "type": "table",
+      "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+      "description": "Confronto delle anomalie rilevate dallo streaming (is_anomaly) col ground-truth Fire>=1, calcolato dal batch su processed_readings. nodo_4 non ha ground-truth (escluso).",
+      "fieldConfig": {
+        "defaults": { "custom": { "displayMode": "auto", "align": "auto" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "/(precision|recall|f1|accuracy)/i" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "unit", "value": "percentunit" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "red", "value": null },
+                { "color": "orange", "value": 0.5 },
+                { "color": "green", "value": 0.8 }
+              ] } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [ { "displayName": "node_id", "desc": false } ]
+      },
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+          "query": "val_tp:*",
+          "metrics": [ { "id": "1", "type": "raw_data", "settings": { "size": "10" } } ],
+          "bucketAggs": [],
+          "timeField": "report_generated_at"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true, "_index": true, "_type": true, "highlight": true, "sort": true,
+              "trend_hourly": true, "distinct_reading_index": true,
+              "first_ingest_ts": true, "last_ingest_ts": true, "report_generated_at": true,
+              "p50_temp": true, "p95_temp": true, "p99_temp": true, "avg_temp": true, "min_temp": true, "max_temp": true,
+              "p50_co": true, "p95_co": true, "p99_co": true, "avg_co": true, "min_co": true, "max_co": true,
+              "p50_smoke": true, "p95_smoke": true, "p99_smoke": true, "avg_smoke": true, "min_smoke": true, "max_smoke": true,
+              "p50_gas": true, "p95_gas": true, "p99_gas": true, "avg_gas": true, "min_gas": true, "max_gas": true,
+              "corr_temp_co": true, "corr_temp_gas": true, "corr_temp_smoke": true,
+              "corr_co_smoke": true, "corr_co_gas": true, "corr_smoke_gas": true
+            },
+            "indexByName": {
+              "node_id": 0, "val_tp": 1, "val_fp": 2, "val_tn": 3, "val_fn": 4,
+              "val_precision": 5, "val_recall": 6, "val_f1": 7, "val_accuracy": 8
+            },
+            "renameByName": {
+              "node_id": "Nodo",
+              "val_tp": "TP", "val_fp": "FP", "val_tn": "TN", "val_fn": "FN",
+              "val_precision": "Precision", "val_recall": "Recall",
+              "val_f1": "F1", "val_accuracy": "Accuracy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Correlazioni tra sensori",
+      "gridPos": { "x": 0, "y": 36, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 41,
+      "title": "Correlazioni chiave per nodo (Pearson)",
+      "type": "table",
+      "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+      "description": "Correlazione di Pearson tra coppie di sensori, per nodo, calcolata con Spark MLlib sull'intero storico. Valori vicini a ±1 = forte relazione (positiva/negativa).",
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "displayMode": "color-background", "align": "center" },
+          "min": -1, "max": 1, "decimals": 3,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "blue", "value": null },
+            { "color": "transparent", "value": -0.3 },
+            { "color": "orange", "value": 0.3 }
+          ] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "node_id" },
+            "properties": [ { "id": "custom.displayMode", "value": "auto" }, { "id": "custom.width", "value": 110 } ] }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [ { "displayName": "node_id", "desc": false } ] },
+      "gridPos": { "x": 0, "y": 37, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-baseline" },
+          "query": "corr_temp_co:*",
+          "metrics": [ { "id": "1", "type": "raw_data", "settings": { "size": "10" } } ],
+          "bucketAggs": [],
+          "timeField": "report_generated_at"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true, "_index": true, "_type": true, "highlight": true, "sort": true,
+              "trend_hourly": true, "distinct_reading_index": true,
+              "first_ingest_ts": true, "last_ingest_ts": true, "report_generated_at": true,
+              "total_readings": true,
+              "p50_temp": true, "p95_temp": true, "p99_temp": true, "avg_temp": true, "min_temp": true, "max_temp": true,
+              "p50_co": true, "p95_co": true, "p99_co": true, "avg_co": true, "min_co": true, "max_co": true,
+              "p50_smoke": true, "p95_smoke": true, "p99_smoke": true, "avg_smoke": true, "min_smoke": true, "max_smoke": true,
+              "p50_gas": true, "p95_gas": true, "p99_gas": true, "avg_gas": true, "min_gas": true, "max_gas": true,
+              "val_tp": true, "val_fp": true, "val_tn": true, "val_fn": true,
+              "val_precision": true, "val_recall": true, "val_f1": true, "val_accuracy": true
+            },
+            "indexByName": {
+              "node_id": 0, "corr_temp_co": 1, "corr_temp_gas": 2, "corr_temp_smoke": 3,
+              "corr_co_smoke": 4, "corr_co_gas": 5, "corr_smoke_gas": 6
+            },
+            "renameByName": {
+              "node_id": "Nodo",
+              "corr_temp_co": "Temp~CO", "corr_temp_gas": "Temp~Gas", "corr_temp_smoke": "Temp~Smoke",
+              "corr_co_smoke": "CO~Smoke", "corr_co_gas": "CO~Gas", "corr_smoke_gas": "Smoke~Gas"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "title": "Matrice di correlazione globale (tutti i sensori)",
+      "type": "table",
+      "datasource": { "type": "elasticsearch", "uid": "es-correlation" },
+      "description": "Matrice 7×7 di Pearson tra tutti i sensori sull'intero dataset (Spark MLlib). Una riga per coppia (sensore_a, sensore_b).",
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "displayMode": "color-background", "align": "center" },
+          "min": -1, "max": 1, "decimals": 3,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "blue", "value": null },
+            { "color": "transparent", "value": -0.3 },
+            { "color": "orange", "value": 0.3 }
+          ] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "correlation" },
+            "properties": [ { "id": "custom.displayMode", "value": "color-background" } ] }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [ { "displayName": "sensor_a", "desc": false } ] },
+      "gridPos": { "x": 0, "y": 45, "w": 24, "h": 12 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "es-correlation" },
+          "query": "*",
+          "metrics": [ { "id": "1", "type": "raw_data", "settings": { "size": "100" } } ],
+          "bucketAggs": [],
+          "timeField": "report_generated_at"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true, "_index": true, "_type": true, "highlight": true, "sort": true,
+              "report_generated_at": true
+            },
+            "indexByName": { "sensor_a": 0, "sensor_b": 1, "correlation": 2 },
+            "renameByName": { "sensor_a": "Sensore A", "sensor_b": "Sensore B", "correlation": "Correlazione" }
+          }
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "iot",
+    "batch",
+    "storico",
+    "lambda"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "IoT Storico (Batch Layer)",
+  "uid": "iot-historical-batch",
+  "version": 1
+}

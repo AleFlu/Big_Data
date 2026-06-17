@@ -1,0 +1,693 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": {
+    "list": []
+  },
+  "description": "Mappa dinamica dei 4 nodi sensore. ATTENZIONE: le coordinate dei nodi sono FITTIZIE (assegnate a mano nella zona dei Sette Fratelli, est di Cagliari) — i sensori reali non hanno GPS. Il colore del marker riflette lo stato live: verde=normale, arancione=anomalia, rosso=incendio.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Home IoT",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/iot-sensor-main/iot-sensor-dashboard"
+    }
+  ],
+  "panels": [
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Nodi in incendio",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "es-node-status"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "es-node-status"
+          },
+          "query": "map_status:2",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10"
+              }
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": ["node_id"]
+            }
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": ["count"]
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Nodi in anomalia",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "es-node-status"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "es-node-status"
+          },
+          "query": "map_status:1",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10"
+              }
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": ["node_id"]
+            }
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": ["count"]
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Nodi normali",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "es-node-status"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "es-node-status"
+          },
+          "query": "map_status:0",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10"
+              }
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": ["node_id"]
+            }
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": ["count"]
+          }
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "type": "geomap",
+      "title": "Mappa nodi — stato incendio (live)",
+      "description": "Coordinate fittizie nella zona dei Sette Fratelli. Colore = map_status (0 normale / 1 anomalia / 2 incendio). Dimensione marker proporzionale alla severità.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "es-node-status"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 18
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "map_status"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": { "text": "Normale", "index": 0 },
+                      "1": { "text": "Anomalia", "index": 1 },
+                      "2": { "text": "Incendio", "index": 2 }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "displayName",
+                "value": "Stato"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "node_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Apri dettaglio nodo",
+                    "url": "/d/iot-node-detail/iot-node-detail?var-node=${__data.fields.node_id}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "view": {
+          "id": "coords",
+          "lat": 39.283,
+          "lon": 9.413,
+          "zoom": 12
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showScale": false,
+          "showMeasure": false,
+          "showDebug": false
+        },
+        "basemap": {
+          "type": "osm-standard",
+          "name": "OpenStreetMap",
+          "config": {}
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Nodi sensore",
+            "location": {
+              "mode": "coords",
+              "latitude": "lat",
+              "longitude": "lon"
+            },
+            "config": {
+              "style": {
+                "size": {
+                  "field": "map_status",
+                  "fixed": 10,
+                  "min": 8,
+                  "max": 18
+                },
+                "color": {
+                  "field": "map_status",
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.9,
+                "symbol": {
+                  "mode": "fixed",
+                  "fixed": "img/icons/marker/circle.svg"
+                },
+                "text": {
+                  "mode": "field",
+                  "field": "node_id",
+                  "fixed": ""
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": -16,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              },
+              "showLegend": true
+            },
+            "tooltip": true
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "es-node-status"
+          },
+          "query": "*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10"
+              }
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "node_id",
+                "fire_state_label",
+                "map_status",
+                "temperature_c",
+                "humidity_pct",
+                "co",
+                "smoke_ppm",
+                "gas_ohm",
+                "lat",
+                "lon"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Stato nodi (live)",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "es-node-status"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "map_status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Normale",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "Anomalia",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "Incendio",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Stato"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "node_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Apri dettaglio nodo",
+                    "url": "/d/iot-node-detail/iot-node-detail?var-node=${__data.fields.node_id}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "node_id",
+            "desc": false
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "es-node-status"
+          },
+          "query": "*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10"
+              }
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "node_id",
+                "fire_state_label",
+                "map_status",
+                "anomaly_sensors",
+                "temperature_c",
+                "humidity_pct",
+                "co",
+                "smoke_ppm",
+                "gas_ohm",
+                "last_update_ts"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "node_id": 0,
+              "map_status": 1,
+              "fire_state_label": 2,
+              "anomaly_sensors": 3,
+              "temperature_c": 4,
+              "humidity_pct": 5,
+              "co": 6,
+              "smoke_ppm": 7,
+              "gas_ohm": 8,
+              "last_update_ts": 9
+            },
+            "renameByName": {
+              "fire_state_label": "Stato fire",
+              "anomaly_sensors": "Sensori in anomalia",
+              "temperature_c": "Temp (°C)",
+              "humidity_pct": "Umidità (%)",
+              "co": "CO (ppm)",
+              "smoke_ppm": "Fumo (ppm)",
+              "gas_ohm": "Gas (Ohm)",
+              "last_update_ts": "Ultimo aggiornamento"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "iot",
+    "mappa",
+    "incendi"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Mappa Incendi",
+  "uid": "iot-fire-map",
+  "version": 1
+}

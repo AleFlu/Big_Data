@@ -1,0 +1,83 @@
+apiVersion: 1
+
+datasources:
+  - name: Elasticsearch
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: sensors_live_index
+    jsonData:
+      flavor: elasticsearch
+      version: "7.17.0"
+      timeField: ingest_ts
+      maxConcurrentShardRequests: 5
+      logMessageField: ""
+      logLevelField: ""
+    isDefault: true
+    editable: true
+
+  - name: Elasticsearch-NodeStatus
+    uid: es-node-status
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: node_status_index
+    jsonData:
+      flavor: elasticsearch
+      version: "7.17.0"
+      timeField: last_update_ts
+      maxConcurrentShardRequests: 5
+    isDefault: false
+    editable: true
+
+  # Datasource per l'indice window_stats (aggregazioni a finestra della query
+  # streaming separata). uid esplicito e stabile così il pannello del dashboard
+  # può referenziarlo direttamente senza dipendere dall'auto-generazione di uid.
+  - name: Elasticsearch-WindowStats
+    uid: es-window-stats
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: window_stats
+    jsonData:
+      flavor: elasticsearch
+      version: "7.17.0"
+      timeField: window_start
+      maxConcurrentShardRequests: 5
+    isDefault: false
+    editable: true
+
+  # Mirror del BATCH LAYER storico (Lambda). Mongo node_baseline è la source of
+  # truth; questo index ES è il mirror che Grafana può leggere (Grafana non ha
+  # datasource Mongo). uid STABILE: la dashboard historical_dashboard.json lo
+  # referenzia direttamente, così il provisioning resta deterministico.
+  - name: Elasticsearch-Baseline
+    uid: es-baseline
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: node_baseline_index
+    jsonData:
+      flavor: elasticsearch
+      version: "7.17.0"
+      timeField: report_generated_at
+      maxConcurrentShardRequests: 5
+    isDefault: false
+    editable: true
+
+  # Matrice di correlazione globale tra sensori (Spark MLlib, batch layer).
+  # Index separato dal baseline perché è una tabella per-coppia (7×7 = 49 righe),
+  # non un documento per nodo. uid stabile referenziato dalla dashboard storica.
+  - name: Elasticsearch-Correlation
+    uid: es-correlation
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: sensor_correlation_index
+    jsonData:
+      flavor: elasticsearch
+      version: "7.17.0"
+      timeField: report_generated_at
+      maxConcurrentShardRequests: 5
+    isDefault: false
+    editable: true

@@ -1,0 +1,2328 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": {
+    "list": []
+  },
+  "description": "Dettaglio parametri per singolo nodo sensore — seleziona nodo dal menu",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Home IoT",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/iot-sensor-main/iot-sensor-dashboard"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Stato Nodo",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Stato Fire",
+      "type": "stat",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES_STATUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "true": {
+                  "text": "FIRE",
+                  "color": "red",
+                  "index": 0
+                },
+                "false": {
+                  "text": "NO FIRE",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "NO FIRE",
+                  "color": "green",
+                  "index": 2
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "empty",
+                "result": {
+                  "text": "NO FIRE",
+                  "color": "green",
+                  "index": 3
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "NO FIRE"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^is_fire$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES_STATUS}"
+          },
+          "query": "_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Anomalie Attive",
+      "type": "stat",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node AND is_anomaly:true",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Temperatura Attuale (°C)",
+      "type": "stat",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 15
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "temperature_c"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "CO Attuale (ppm)",
+      "type": "stat",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "orange",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "co"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Smoke Attuale (ppm)",
+      "type": "stat",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "smoke_ppm"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Umidità Attuale (%)",
+      "type": "stat",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 30
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "humidity_pct"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Serie Temporali",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "title": "Gas (Ohm) nel tempo",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "gas_ohm"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "Gas (Ohm)"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "NO2 e IR nel tempo",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "no2"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "NO2"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "3",
+              "type": "avg",
+              "field": "ir"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "4",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "IR"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Z-Score Anomalie",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "title": "Z-Score Temperatura",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": -2
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "zscore_Temperature"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "Z-Score Temp"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Z-Score CO",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": -2
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 23,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "zscore_CO"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "Z-Score CO"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Z-Score Smoke",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": -2
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "zscore_Smoke"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "Z-Score Smoke"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "title": "Z-Score Gas",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": -2
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 23,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "zscore_Gas"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "Z-Score Gas"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Ultimi eventi",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "title": "Ultimi 50 record",
+      "type": "table",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_anomaly"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_fire"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "ingest_ts",
+            "desc": true
+          }
+        ]
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "50"
+              }
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "ingest_ts"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "CO nel tempo (ppm)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "orange",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "thresholdsStyle": {
+          "mode": "line"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "co"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "CO"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Smoke nel tempo (ppm)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.05
+              },
+              {
+                "color": "orange",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.15
+              }
+            ]
+          },
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "thresholdsStyle": {
+          "mode": "line"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "smoke_ppm"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "10s",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "timeField": "ingest_ts",
+          "alias": "Smoke"
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Meteo",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 101,
+      "title": "Temperatura (°C)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 35
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "thresholdsStyle": {
+          "mode": "line"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "timeField": "ingest_ts",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "temperature_c"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "alias": "Temperatura"
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "title": "Umidità (%)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "thresholdsStyle": {
+          "mode": "line"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "timeField": "ingest_ts",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "humidity_pct"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "alias": "Umidità"
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "title": "Pressione (hPa)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pressurehpa",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "timeField": "ingest_ts",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "pressure_hpa"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "alias": "Pressione"
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "title": "UV Index",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "thresholdsStyle": {
+          "mode": "line"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "timeField": "ingest_ts",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "uv_index"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "alias": "UV Index"
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "title": "Luce Visibile",
+      "type": "timeseries",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES}"
+          },
+          "query": "node_id:$node",
+          "timeField": "ingest_ts",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "visible_light"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "ingest_ts",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "1"
+              }
+            }
+          ],
+          "alias": "Luce Visibile"
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "type": "row",
+      "title": "Range Storico (Lambda — Batch Layer)",
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 61,
+      "type": "stat",
+      "title": "Temperatura Min / Max storico",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES_STATUS}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^running_(min|max)_temp$/",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES_STATUS}"
+          },
+          "query": "_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "type": "stat",
+      "title": "CO Min / Max storico",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES_STATUS}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 150
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^running_(min|max)_co$/",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES_STATUS}"
+          },
+          "query": "_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "type": "stat",
+      "title": "Smoke Min / Max storico",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES_STATUS}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "decimals": 4,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.08
+              },
+              {
+                "color": "red",
+                "value": 0.15
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^running_(min|max)_smoke$/",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES_STATUS}"
+          },
+          "query": "_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "type": "stat",
+      "title": "Record Totali Processati",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES_STATUS}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^total_processed$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES_STATUS}"
+          },
+          "query": "_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "type": "stat",
+      "title": "Gas Min / Max storico",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ES_STATUS}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 64
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5000
+              },
+              {
+                "color": "green",
+                "value": 10000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^running_(min|max)_gas$/",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ES_STATUS}"
+          },
+          "query": "_id:$node",
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "bucketAggs": [],
+          "timeField": "last_update_ts"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "iot",
+    "nodi",
+    "dettaglio"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "nodo_1",
+          "value": "nodo_1"
+        },
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "${DS_ES}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Nodo Sensore",
+        "multi": false,
+        "name": "node",
+        "options": [
+          {
+            "selected": true,
+            "text": "nodo_1",
+            "value": "nodo_1"
+          },
+          {
+            "selected": false,
+            "text": "nodo_2",
+            "value": "nodo_2"
+          },
+          {
+            "selected": false,
+            "text": "nodo_3",
+            "value": "nodo_3"
+          },
+          {
+            "selected": false,
+            "text": "nodo_4",
+            "value": "nodo_4"
+          }
+        ],
+        "query": "nodo_1,nodo_2,nodo_3,nodo_4",
+        "refresh": 0,
+        "type": "custom",
+        "sort": 0
+      },
+      {
+        "current": {
+          "text": "Elasticsearch",
+          "value": "Elasticsearch"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "DS_ES",
+        "options": [],
+        "query": "elasticsearch",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "hide": 2,
+        "name": "DS_ES_STATUS",
+        "query": "elasticsearch",
+        "refresh": 1,
+        "type": "datasource",
+        "current": {
+          "text": "Elasticsearch-NodeStatus",
+          "value": "Elasticsearch-NodeStatus"
+        }
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "IoT Node Detail",
+  "uid": "iot-node-detail",
+  "version": 1
+}

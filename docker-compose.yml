@@ -1,0 +1,534 @@
+name: bigdata_iot
+
+networks:
+  iot_net:
+    driver: bridge
+
+volumes:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:
+  es_data:
+  mongo_data:
+  grafana_data:
+  spark_checkpoints:
+
+services:
+
+  # ── KAFKA CLUSTER (KRaft, 3 broker, no ZooKeeper) ───────────────────────────
+  # Quorum controller a 3 votanti (1@kafka,2@kafka2,3@kafka3) condiviso da tutti.
+  # Ogni broker è anche controller. replication-factor=3 + min.insync.replicas=2
+  # danno vera fault tolerance: il cluster sopravvive alla perdita di 1 broker.
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    platform: linux/arm64
+    container_name: kafka
+    hostname: kafka
+    networks: [iot_net]
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      CLUSTER_ID: ${CLUSTER_ID}
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://host.docker.internal:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093,2@kafka2:9093,3@kafka3:9093
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_HEAP_OPTS: "-Xmx320m -Xms256m"
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: kafka
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.6.1
+    platform: linux/arm64
+    container_name: kafka2
+    hostname: kafka2
+    networks: [iot_net]
+    volumes:
+      - kafka2_data:/var/lib/kafka/data
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      CLUSTER_ID: ${CLUSTER_ID}
+      KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka2:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093,2@kafka2:9093,3@kafka3:9093
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_HEAP_OPTS: "-Xmx320m -Xms256m"
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:29092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.6.1
+    platform: linux/arm64
+    container_name: kafka3
+    hostname: kafka3
+    networks: [iot_net]
+    volumes:
+      - kafka3_data:/var/lib/kafka/data
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      CLUSTER_ID: ${CLUSTER_ID}
+      KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka3:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093,2@kafka2:9093,3@kafka3:9093
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_HEAP_OPTS: "-Xmx320m -Xms256m"
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:29092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  # ── KAFKA TOPIC INIT (ephemero) ─────────────────────────────────────────────
+  # replication-factor=3: ogni partizione ha 3 repliche distribuite sui 3 broker.
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.1
+    platform: linux/arm64
+    container_name: kafka-init
+    networks: [iot_net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+    entrypoint: ["bash", "-c", "/usr/bin/kafka-topics --bootstrap-server kafka:29092,kafka2:29092,kafka3:29092 --create --if-not-exists --topic iot.sensor.data --partitions 4 --replication-factor 3 --config min.insync.replicas=2 --config retention.ms=86400000 && echo 'Topic iot.sensor.data created with 4 partitions, replication-factor 3'"]
+    restart: "no"
+
+  # ── MONGODB 7.0 ─────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    platform: linux/arm64
+    container_name: mongodb
+    hostname: mongodb
+    networks: [iot_net]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo_init:/docker-entrypoint-initdb.d:ro
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    command: mongod --wiredTigerCacheSizeGB 0.25
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ── ELASTICSEARCH 7.17.28 ───────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    platform: linux/arm64
+    container_name: elasticsearch
+    hostname: elasticsearch
+    networks: [iot_net]
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms${ES_HEAP_SIZE} -Xmx${ES_HEAP_SIZE}"
+      xpack.security.enabled: "false"
+      xpack.ml.enabled: "false"
+      indices.memory.index_buffer_size: "10%"
+      bootstrap.memory_lock: "false"
+    mem_limit: 1024m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+
+  # ── GRAFANA 10.x ────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    platform: linux/arm64
+    container_name: grafana
+    hostname: grafana
+    networks: [iot_net]
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/iot_dashboard.json
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/health | grep -q 'ok'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── CSV PRODUCERS (4 nodi separati) ─────────────────────────────────────────
+  csv-producer-1:
+    build:
+      context: ./csv_producer
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: csv-producer-1
+    networks: [iot_net]
+    volumes:
+      - ./acquisizioni:/data/acquisizioni:ro
+    environment:
+      NODE_ID: nodo_1
+      CSV_PATH: /data/acquisizioni/Nodo_1/prima_acquisizione/nodo1_csv.csv
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29092,kafka3:29092
+      KAFKA_TOPIC: iot.sensor.data
+      KAFKA_PARTITION: "0"
+      PRODUCER_DELAY_MS: ${PRODUCER_DELAY_MS:-500}
+      LOOP_FOREVER: "true"
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: "no"
+    mem_limit: 128m
+
+  csv-producer-2:
+    build:
+      context: ./csv_producer
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: csv-producer-2
+    networks: [iot_net]
+    volumes:
+      - ./acquisizioni:/data/acquisizioni:ro
+    environment:
+      NODE_ID: nodo_2
+      CSV_PATH: /data/acquisizioni/Nodo_2/prima_acquisizione/nodo2.csv
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29092,kafka3:29092
+      KAFKA_TOPIC: iot.sensor.data
+      KAFKA_PARTITION: "1"
+      PRODUCER_DELAY_MS: ${PRODUCER_DELAY_MS:-500}
+      LOOP_FOREVER: "true"
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: "no"
+    mem_limit: 128m
+
+  csv-producer-3:
+    build:
+      context: ./csv_producer
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: csv-producer-3
+    networks: [iot_net]
+    volumes:
+      - ./acquisizioni:/data/acquisizioni:ro
+    environment:
+      NODE_ID: nodo_3
+      CSV_PATH: /data/acquisizioni/Nodo_3/prima_acq/nodo3_csv.csv
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29092,kafka3:29092
+      KAFKA_TOPIC: iot.sensor.data
+      KAFKA_PARTITION: "2"
+      PRODUCER_DELAY_MS: ${PRODUCER_DELAY_MS:-500}
+      LOOP_FOREVER: "true"
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: "no"
+    mem_limit: 128m
+
+  csv-producer-4:
+    build:
+      context: ./csv_producer
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: csv-producer-4
+    networks: [iot_net]
+    volumes:
+      - ./acquisizioni:/data/acquisizioni:ro
+    environment:
+      NODE_ID: nodo_4
+      CSV_PATH: /data/acquisizioni/Nodo_4/nodo4_csv.csv
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29092,kafka3:29092
+      KAFKA_TOPIC: iot.sensor.data
+      KAFKA_PARTITION: "3"
+      PRODUCER_DELAY_MS: ${PRODUCER_DELAY_MS:-500}
+      LOOP_FOREVER: "true"
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: "no"
+    mem_limit: 128m
+
+  # ── SPARK CLUSTER ────────────────────────────────────────────────────────────
+  spark-master:
+    build:
+      context: ./spark_job
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: spark-master
+    hostname: spark-master
+    networks: [iot_net]
+    ports:
+      - "8082:8082"
+      - "7077:7077"
+    environment:
+      SPARK_ROLE: master
+    volumes:
+      - spark_checkpoints:/spark/checkpoints
+    # Il master coordina soltanto (non esegue task): l'uso reale è ~200 MB, 384m
+    # basta con margine. Ridotto da 512m per alleggerire il picco su 8 GB.
+    mem_limit: 384m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8082 | grep -q 'Spark Master'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  spark-worker-1:
+    build:
+      context: ./spark_job
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+    networks: [iot_net]
+    environment:
+      SPARK_ROLE: worker
+      SPARK_WORKER_CORES: "1"
+      SPARK_WORKER_MEMORY: 512m
+    volumes:
+      - spark_checkpoints:/spark/checkpoints
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    mem_limit: 640m
+    restart: unless-stopped
+
+  spark-worker-2:
+    build:
+      context: ./spark_job
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    networks: [iot_net]
+    environment:
+      SPARK_ROLE: worker
+      SPARK_WORKER_CORES: "1"
+      SPARK_WORKER_MEMORY: 512m
+    volumes:
+      - spark_checkpoints:/spark/checkpoints
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    mem_limit: 640m
+    restart: unless-stopped
+
+  spark-worker-3:
+    build:
+      context: ./spark_job
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: spark-worker-3
+    hostname: spark-worker-3
+    networks: [iot_net]
+    environment:
+      SPARK_ROLE: worker
+      SPARK_WORKER_CORES: "1"
+      SPARK_WORKER_MEMORY: 512m
+    volumes:
+      - spark_checkpoints:/spark/checkpoints
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    mem_limit: 640m
+    restart: unless-stopped
+
+  # ── SPARK STREAMING JOB (driver) ─────────────────────────────────────────────
+  spark-job:
+    build:
+      context: ./spark_job
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: spark-job
+    hostname: spark-job
+    networks: [iot_net]
+    user: "root"
+    environment:
+      SPARK_ROLE: driver
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29092,kafka3:29092
+      KAFKA_TOPIC: iot.sensor.data
+      MONGO_URI: mongodb://mongodb:27017/sensor_data
+      ES_HOST: elasticsearch
+      ES_PORT: "9200"
+      ES_INDEX: sensors_live_index
+      SPARK_DRIVER_MEMORY: 512m
+      SPARK_EXECUTOR_MEMORY: 512m
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    volumes:
+      - spark_checkpoints:/spark/checkpoints
+    depends_on:
+      spark-master:
+        condition: service_healthy
+      spark-worker-1:
+        condition: service_started
+      spark-worker-2:
+        condition: service_started
+      spark-worker-3:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: 768m
+    restart: on-failure:3
+
+  # ── SPARK BATCH JOB (batch layer storico — Lambda) ───────────────────────────
+  # Job batch SEPARATO dallo streaming: rilegge tutta raw_readings, calcola
+  # percentili/baseline/trend/validazione/correlazioni per nodo e scrive lo
+  # snapshot su MongoDB node_baseline (+ mirror ES per Grafana).
+  # Sotto profile "batch": NON parte con `docker compose up -d`. Gira ON-DEMAND
+  # con `make batch-now` (un run e termina). Scelta dettata dalla RAM: su una
+  # macchina da 8 GB un batch in loop terrebbe un executor sempre attivo e, con
+  # lo streaming già a pieno, spingerebbe lo stack in OOM. On-demand mantiene il
+  # picco basso: il 3° core resta libero e viene usato solo quando lanci il batch.
+  spark-batch:
+    build:
+      context: ./spark_job
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    container_name: spark-batch
+    # hostname DEVE combaciare con spark.driver.host=spark-batch in submit_batch.sh,
+    # altrimenti gli executor sul cluster non raggiungono il driver (deploy client).
+    hostname: spark-batch
+    networks: [iot_net]
+    user: "root"
+    profiles: ["batch"]
+    environment:
+      SPARK_ROLE: batch
+      MONGO_URI: mongodb://mongodb:27017/sensor_data
+      ES_HOST: elasticsearch
+      ES_PORT: "9200"
+      ES_BASELINE_INDEX: node_baseline_index
+      BASELINE_COLLECTION: node_baseline
+      SPARK_DRIVER_MEMORY: 512m
+      SPARK_EXECUTOR_MEMORY: 512m
+      # BATCH_LOOP=false: un solo run ed esce (on-demand, default per stabilità RAM).
+      # `make batch-now` forza comunque false; il loop resta disponibile (true) solo
+      # se in futuro si gira su una macchina con più RAM.
+      BATCH_LOOP: "false"
+      BATCH_INTERVAL_SECONDS: "600"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: 768m
+
+  # ── MONGO EXPRESS ───────────────────────────────────────────────────────────
+  mongo-express:
+    image: mongo-express:latest
+    platform: linux/arm64
+    container_name: mongo-express
+    hostname: mongo-express
+    networks: [iot_net]
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    mem_limit: 128m
+    restart: unless-stopped
+
+  # ── KAFKA UI ────────────────────────────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    platform: linux/arm64
+    container_name: kafka-ui
+    hostname: kafka-ui
+    networks: [iot_net]
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: iot-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092,kafka2:29092,kafka3:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9101
+    depends_on:
+      kafka:
+        condition: service_healthy
+    mem_limit: 256m
+    restart: unless-stopped

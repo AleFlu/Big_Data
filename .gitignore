@@ -1,0 +1,33 @@
+# Env — mai committare il .env reale
+.env
+
+# Dati sensori (CSV acquisizioni)
+acquisizioni/
+
+# Versione precedente del progetto (non parte della consegna)
+vecchia_versione/
+
+# Notebook e relazioni
+*.ipynb
+*.pdf
+*.docx
+
+# Backup temporanei delle relazioni (es. Bozza_*.backup-AAAAMMGG-HHMMSS.docx)
+*.backup-*.docx
+*.bak
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Spark checkpoints locali
+spark_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Docker override locali
+docker-compose.override.yml
