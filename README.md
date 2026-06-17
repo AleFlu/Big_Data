@@ -388,5 +388,4 @@ Elasticsearch document counts keep increasing throughout (`make check`) — no d
 
 ## Authors
 
-University project for the **Big Data** course (Master's degree).
-Repository: <https://github.com/AleFlu/Big_Data_iot>
+Repository: <https://github.com/AleFlu/Big_Data>
