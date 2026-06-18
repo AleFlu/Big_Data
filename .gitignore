@@ -31,3 +31,6 @@ __pycache__/
 
 # Docker override locali
 docker-compose.override.yml
+
+# Video sorgente pesante (la GIF derivata in docs/ è committata)
+media/

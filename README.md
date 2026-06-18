@@ -12,6 +12,12 @@
   <img alt="Python" src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white">
 </p>
 
+<p align="center">
+  <img alt="Grafana dashboard demo" src="docs/grafana_dashboard.gif" width="720">
+  <br>
+  <em>Grafana dashboard — real-time sensor metrics, anomaly and fire detection</em>
+</p>
+
 ---
 
 ## Quick start
