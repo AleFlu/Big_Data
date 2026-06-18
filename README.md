@@ -20,136 +20,6 @@
 
 ---
 
-## Quick start
-
-### 1. Clone
-
-```bash
-git clone https://github.com/AleFlu/Big_Data_iot.git
-cd Big_Data_iot
-```
-
-### 2. Create `.env`
-
-```bash
-cp .env.example .env
-```
-
-Generate a Kafka KRaft cluster ID and paste it in:
-
-```bash
-docker run --rm confluentinc/cp-kafka:7.6.1 kafka-storage random-uuid
-```
-
-```
-# .env
-CLUSTER_ID=<generated-uuid>
-PRODUCER_DELAY_MS=500
-ES_HEAP_SIZE=512m
-MONGO_INITDB_DATABASE=sensor_data
-ALERT_WEBHOOK_URL=          # optional — leave empty to disable fire alerts
-```
-
-### 3. Place the sensor CSV files
-
-```
-acquisizioni/
-├── Nodo_1/prima_acquisizione/nodo1_csv.csv   # ~1 733 rows · includes Fire column
-├── Nodo_2/prima_acquisizione/nodo2.csv       # ~1 732 rows · includes Fire column
-├── Nodo_3/prima_acq/nodo3_csv.csv            # ~1 669 rows · includes Fire column
-└── Nodo_4/nodo4_csv.csv                      # ~1 611 rows · no Fire column
-```
-
-Columns: `Temperature (C)` · `Humidity (%)` · `Pressure (hPA)` · `Gas (Ohm)` · `Visible Light` · `IR` · `UV index` · `CO` · `NO2` · `Smoke (ppm)` · `Fire` (optional)
-
-### 4. Start everything
-
-```bash
-make up        # or: docker compose up -d
-```
-
-Wait ~60–90 seconds for all health checks to pass, then open Grafana:
-
-```
-http://localhost:3000   (admin / admin)
-```
-
-> The streaming pipeline (`make up`) is the **speed layer** and runs continuously.
-> The **batch layer** (historical analytics) is on-demand — run `make batch-now`
-> once raw data has accumulated. See [Lambda Architecture](#lambda-architecture).
-
-<details>
-<summary>Step-by-step startup (first time or after issues)</summary>
-
-```bash
-# Build custom images
-docker compose build
-
-# Core infrastructure (3-broker Kafka, Mongo, Elasticsearch)
-docker compose up -d kafka kafka2 kafka3 mongodb elasticsearch
-
-# Create the Kafka topic (wait ~30–60s for the brokers to be healthy)
-docker compose up kafka-init
-
-# Spark cluster
-docker compose up -d spark-master
-# Check: http://localhost:8082 → Spark Master UI
-docker compose up -d spark-worker-1 spark-worker-2 spark-worker-3
-# Check: http://localhost:8082 → 3 Workers
-
-# Spark streaming job (driver)
-docker compose up -d spark-job
-docker compose logs -f spark-job
-# Wait for: "Streaming query avviata" and "Window query avviata"
-
-# CSV producers (one per node)
-docker compose up -d csv-producer-1 csv-producer-2 csv-producer-3 csv-producer-4
-
-# Monitoring tools
-docker compose up -d grafana mongo-express kafka-ui
-```
-
-</details>
-
----
-
-## Services & ports
-
-| Service | URL | Credentials |
-|---|---|---|
-| **Grafana** | http://localhost:3000 | admin / admin |
-| Spark Master UI | http://localhost:8082 | — |
-| Kafka UI | http://localhost:8080 | — |
-| Mongo Express | http://localhost:8081 | — |
-| Elasticsearch | http://localhost:9200 | — |
-| MongoDB | localhost:27017 | — |
-| Kafka | localhost:9092 | — |
-
----
-
-## Makefile shortcuts
-
-A `Makefile` wraps the most common commands. Run `make` (or `make help`) for the full list:
-
-```bash
-make up              # start the whole streaming stack
-make logs            # follow the Spark streaming job logs
-make health          # active Spark workers + Elasticsearch doc counts
-make check           # document counts across Elasticsearch + MongoDB
-make batch-now       # run the historical batch layer once (on-demand)
-make rebuild-spark   # rebuild & recreate all Spark images together (+ batch)
-make compile         # py_compile all Python sources
-make validate-json   # validate the Grafana dashboard JSON
-make reset           # full reset (drops volumes, rebuilds, restarts)
-```
-
-> `make rebuild-spark` rebuilds and recreates the driver, master and all three
-> workers in one shot — they share a single Dockerfile, so they must always be
-> rebuilt together (rebuilding only the driver leaves the workers on a stale
-> image and tasks fail at runtime). It also rebuilds the on-demand batch image.
-
----
-
 ## What this project does
 
 A fully containerised streaming pipeline that ingests environmental sensor data from 4 independent IoT nodes, processes it in real-time with anomaly detection and fire-transition logic, and visualises everything on live Grafana dashboards. It implements a **Lambda Architecture**: a continuous *speed layer* (Spark Structured Streaming) plus an on-demand *batch layer* (Spark batch analytics over the full history).
@@ -347,6 +217,137 @@ The driver runs in **client mode**: `foreachBatch`/`foreachPartition` logic exec
 Set at least **8 GB** in Docker Desktop → Settings → Resources → Memory (the 3-broker Kafka cluster needs the headroom). Actual runtime usage is lower since `mem_limit` values are ceilings. The batch job is on-demand precisely so its 768 MB don't have to coexist with the full streaming stack permanently.
 
 ---
+
+## Quick start
+
+### 1. Clone
+
+```bash
+git clone https://github.com/AleFlu/Big_Data_iot.git
+cd Big_Data_iot
+```
+
+### 2. Create `.env`
+
+```bash
+cp .env.example .env
+```
+
+Generate a Kafka KRaft cluster ID and paste it in:
+
+```bash
+docker run --rm confluentinc/cp-kafka:7.6.1 kafka-storage random-uuid
+```
+
+```
+# .env
+CLUSTER_ID=<generated-uuid>
+PRODUCER_DELAY_MS=500
+ES_HEAP_SIZE=512m
+MONGO_INITDB_DATABASE=sensor_data
+ALERT_WEBHOOK_URL=          # optional — leave empty to disable fire alerts
+```
+
+### 3. Place the sensor CSV files
+
+```
+acquisizioni/
+├── Nodo_1/prima_acquisizione/nodo1_csv.csv   # ~1 733 rows · includes Fire column
+├── Nodo_2/prima_acquisizione/nodo2.csv       # ~1 732 rows · includes Fire column
+├── Nodo_3/prima_acq/nodo3_csv.csv            # ~1 669 rows · includes Fire column
+└── Nodo_4/nodo4_csv.csv                      # ~1 611 rows · no Fire column
+```
+
+Columns: `Temperature (C)` · `Humidity (%)` · `Pressure (hPA)` · `Gas (Ohm)` · `Visible Light` · `IR` · `UV index` · `CO` · `NO2` · `Smoke (ppm)` · `Fire` (optional)
+
+### 4. Start everything
+
+```bash
+make up        # or: docker compose up -d
+```
+
+Wait ~60–90 seconds for all health checks to pass, then open Grafana:
+
+```
+http://localhost:3000   (admin / admin)
+```
+
+> The streaming pipeline (`make up`) is the **speed layer** and runs continuously.
+> The **batch layer** (historical analytics) is on-demand — run `make batch-now`
+> once raw data has accumulated. See [Lambda Architecture](#lambda-architecture).
+
+<details>
+<summary>Step-by-step startup (first time or after issues)</summary>
+
+```bash
+# Build custom images
+docker compose build
+
+# Core infrastructure (3-broker Kafka, Mongo, Elasticsearch)
+docker compose up -d kafka kafka2 kafka3 mongodb elasticsearch
+
+# Create the Kafka topic (wait ~30–60s for the brokers to be healthy)
+docker compose up kafka-init
+
+# Spark cluster
+docker compose up -d spark-master
+# Check: http://localhost:8082 → Spark Master UI
+docker compose up -d spark-worker-1 spark-worker-2 spark-worker-3
+# Check: http://localhost:8082 → 3 Workers
+
+# Spark streaming job (driver)
+docker compose up -d spark-job
+docker compose logs -f spark-job
+# Wait for: "Streaming query avviata" and "Window query avviata"
+
+# CSV producers (one per node)
+docker compose up -d csv-producer-1 csv-producer-2 csv-producer-3 csv-producer-4
+
+# Monitoring tools
+docker compose up -d grafana mongo-express kafka-ui
+```
+
+</details>
+
+---
+
+## Services & ports
+
+| Service | URL | Credentials |
+|---|---|---|
+| **Grafana** | http://localhost:3000 | admin / admin |
+| Spark Master UI | http://localhost:8082 | — |
+| Kafka UI | http://localhost:8080 | — |
+| Mongo Express | http://localhost:8081 | — |
+| Elasticsearch | http://localhost:9200 | — |
+| MongoDB | localhost:27017 | — |
+| Kafka | localhost:9092 | — |
+
+---
+
+## Makefile shortcuts
+
+A `Makefile` wraps the most common commands. Run `make` (or `make help`) for the full list:
+
+```bash
+make up              # start the whole streaming stack
+make logs            # follow the Spark streaming job logs
+make health          # active Spark workers + Elasticsearch doc counts
+make check           # document counts across Elasticsearch + MongoDB
+make batch-now       # run the historical batch layer once (on-demand)
+make rebuild-spark   # rebuild & recreate all Spark images together (+ batch)
+make compile         # py_compile all Python sources
+make validate-json   # validate the Grafana dashboard JSON
+make reset           # full reset (drops volumes, rebuilds, restarts)
+```
+
+> `make rebuild-spark` rebuilds and recreates the driver, master and all three
+> workers in one shot — they share a single Dockerfile, so they must always be
+> rebuilt together (rebuilding only the driver leaves the workers on a stale
+> image and tasks fail at runtime). It also rebuilds the on-demand batch image.
+
+---
+
 
 ## Full reset
 
